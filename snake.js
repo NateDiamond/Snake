@@ -1,3 +1,6 @@
+import { Game } from './game.js';
+
+var game = new Game()
 
 //board
 var blockSize = 25;
