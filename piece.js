@@ -1,9 +1,18 @@
 export class Piece {
-  constructor(coordinates) {
-    this.coordinates = coordinates
+  constructor(x, y, w, h, c) {
+    this.x = x
+    this.y = y
+    this.width = w
+    this.height = h
+    this.color = c
   }
 
-  render(){
-    throw new Error("Abstract function render must be overridden.")
+  collides(piece){
+    return this.x == piece.x && this.y == piece.y
+  }
+
+  render(context){
+    context.fillStyle = this.color
+    context.fillRect(this.x, this.y, this.width, this.height);
   }
 }

@@ -1,35 +1,29 @@
+import {Board} from "./board.js"
+import {Snake} from "./snake.js"
+import {Fruit} from "./fruit.js"
+
 export class Game {
 
   //board
   blockSize = 25;
   rows = 20;
   cols = 20;
-  board;
-  context; 
 
   velocityX = 0;
   velocityY = 0;
 
-  snakeBody = [];
-
-  //food
-  foodX;
-  foodY;
-
   gameOver = false;
  
   constructor() {
-    //snake head
-    this.snakeX = this.blockSize * 5;
-    this.snakeY = this.blockSize * 5;
+    this.board = new Board(0,0,this.cols*this.blockSize, this.rows*this.blockSize, "blue", this.cols, this.rows)
+    this.snake = new Snake(5*this.blockSize,5*this.blockSize,this.blockSize,this.blockSize, "rainbow")
+    this.fruit = new Fruit(this.blockSize, this.blockSize, "white", this.board)
 
-    this.board = document.getElementById("board");
-    this.board.height = this.rows * this.blockSize;
-    this.board.width = this.cols * this.blockSize;
-    this.context = this.board.getContext("2d"); //used for drawing on the board
-    this.context.fillStyle="black";
+    this.canvas = document.getElementById("canvas");
+    this.canvas.height = this.rows * this.blockSize;
+    this.canvas.width = this.cols * this.blockSize;
+    this.context = this.canvas.getContext("2d"); //used for drawing on the board
 
-    this.placeFood();
     document.addEventListener("keyup", Game.changeDirection(this));
   }
 
@@ -38,41 +32,27 @@ export class Game {
         return;
     }
 
-    this.context.fillStyle="black";
-    this.context.fillRect(0, 0, this.board.width, this.board.height);
+    this.board.render(this.context)
+    this.fruit.render(this.context)
 
-    this.context.fillStyle="red";
-    this.context.fillRect(this.foodX, this.foodY, this.blockSize, this.blockSize);
-
-    if (this.snakeX == this.foodX && this.snakeY == this.foodY) {
-        this.snakeBody.push([this.foodX, this.foodY]);
-        this.placeFood();
+    if (this.snake.head().collides(this.fruit)) {
+        this.snake.grow();
+        this.fruit.shuffle()
     }
 
-    for (let i = this.snakeBody.length-1; i > 0; i--) {
-        this.snakeBody[i] = this.snakeBody[i-1];
-    }
-    if (this.snakeBody.length) {
-        this.snakeBody[0] = [this.snakeX, this.snakeY];
-    }
+    this.snake.move(this.velocityX, this.velocityY)
 
-    this.context.fillStyle="lime";
-    this.snakeX += this.velocityX * this.blockSize;
-    this.snakeY += this.velocityY * this.blockSize;
+    this.snake.render(this.context)
 
-    this.context.fillRect(this.snakeX, this.snakeY, this.blockSize, this.blockSize);
-    for (let i = 0; i < this.snakeBody.length; i++) {
-        this.context.fillRect(this.snakeBody[i][0], this.snakeBody[i][1], this.blockSize, this.blockSize);
-    }
 
     //game over conditions
-    if (this.snakeX < 0 || this.snakeX > this.cols*this.blockSize || this.snakeY < 0 || this.snakeY > this.rows*this.blockSize) {
+    if (this.snake.head().x < 0 || this.snake.head().x > this.board.width || this.snake.head().y < 0 || this.snake.head().y > this.board.height) {
         this.gameOver = true;
         alert("Game Over");
     }
 
-    for (let i = 0; i < this.snakeBody.length; i++) {
-        if (this.snakeX == this.snakeBody[i][0] && this.snakeY == this.snakeBody[i][1]) {
+    for (let i = 1; i < this.snake.pieces.length; i++) {
+        if (this.snake.head().collides(this.snake.pieces[i])) {
             this.gameOver = true;
             alert("Game Over");
         }
@@ -81,19 +61,19 @@ export class Game {
 
   static changeDirection(game) {
     return function cD (e) {
-      if (e.code == "ArrowUp" && this.velocityY != 1) {
+      if (e.code == "ArrowUp" && game.velocityY != 1) {
         game.velocityX = 0;
         game.velocityY = -1;
       }
-      else if (e.code == "ArrowDown" && this.velocityY != -1) {
+      else if (e.code == "ArrowDown" && game.velocityY != -1) {
         game.velocityX = 0;
         game.velocityY = 1;
       }
-      else if (e.code == "ArrowLeft" && this.velocityX != 1) {
+      else if (e.code == "ArrowLeft" && game.velocityX != 1) {
         game.velocityX = -1;
         game.velocityY = 0;
       }
-      else if (e.code == "ArrowRight" && this.velocityX != -1) {
+      else if (e.code == "ArrowRight" && game.velocityX != -1) {
         game.velocityX = 1;
         game.velocityY = 0;
       }
@@ -103,9 +83,4 @@ export class Game {
     
   }
 
-  placeFood() {
-    //(0-1) * cols -> (0-19.9999) -> (0-19) * 25
-    this.foodX = Math.floor(Math.random() * this.cols) * this.blockSize;
-    this.foodY = Math.floor(Math.random() * this.rows) * this.blockSize;
-  }
 }
